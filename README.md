@@ -11,6 +11,8 @@ This repository contains production-ready n8n workflows from my Digital Transfor
 
 These workflows are designed to be modular, secure, and easy to import into any n8n instance.
 
+BONUS: Head into the 'Framework for creating Automations through Claude Opus 4' folder to create automations on N8N using prompts on Claude. Read the instructions.
+
 ## Highlights
 
 - AI-enhanced data extraction from transcripts (LLM-powered)
