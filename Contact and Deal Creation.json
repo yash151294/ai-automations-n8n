@@ -1,0 +1,1321 @@
+{
+  "name": "Contact and Deal Creation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "17Uoc0-3c2NiFdPrBgTWBl0fZOQbj1WCA",
+          "mode": "list",
+          "cachedResultName": "Meeting Transcripts",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/17Uoc0-3c2NiFdPrBgTWBl0fZOQbj1WCA"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1488,
+        688
+      ],
+      "id": "848e96e0-4ee0-4ab7-9462-7b53c2dbd23e",
+      "name": "Google Drive Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {}
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -736,
+        1104
+      ],
+      "id": "049d9c51-33db-4628-9a57-fc4923731757",
+      "name": "Download file"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "audio/mpeg",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f8b22932-c9c3-4e28-a03b-e1d7be14778a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d656dc51-dc41-412a-9225-a2cdd2d2024d",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -304,
+        1104
+      ],
+      "id": "7b1cb633-aea1-4fa4-807a-ddfac6049fbb",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        512,
+        1184
+      ],
+      "id": "cfdcf87a-3d63-4dfd-9418-ce59ccdd6b51",
+      "name": "Extract from PDF"
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        512,
+        864
+      ],
+      "id": "2cfc21c1-9559-4974-86c0-8b40109c7dbb",
+      "name": "Transcribe a recording"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract the name and email of the client from the following transcript: {{ $json.text }}\n\nIf no output for the email is found, return a dummy email and mention it."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        784,
+        1088
+      ],
+      "id": "8cb7f197-a98f-4606-94b8-d21589783b26",
+      "name": "Message a model"
+    },
+    {
+      "parameters": {
+        "model": "sonar",
+        "messages": {
+          "message": [
+            {
+              "content": "=Extract the client's name and email (null if not found) into a json response from the transcript: {{ $json.text }}"
+            }
+          ]
+        },
+        "simplify": true,
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        1824
+      ],
+      "id": "c0a82ece-a995-430d-afa4-906d14bc081f",
+      "name": "Perplexity Model",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        1488
+      ],
+      "id": "ec8c3544-bd7c-44a1-9ba1-c7e6b6872c04",
+      "name": "Anthropic Chat Model"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n    \"properties\": {\n      \"persona\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"red_flags\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"potential_opportunities\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"qualification_score\": {\n        \"type\": [\"number\", \"null\"]\n      },\n      \"deal_transcript_analysis\": {\n        \"type\": [\"'string\", \"null\"]\n      },\n      \"deal_name\": {\n        \"type\": [\"string\", \"null\"]\n      },\n       \"deal_probability\": {\n        \"type\": [\"number\", \"null\"]\n      },\n      \"priority\": {\n        \"type\": [\"'string\", \"null\"]\n      },\n      \"sales_call_feedback\": {\n        \"type\": [\"'string\", \"null\"]\n      }\n    }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        1488
+      ],
+      "id": "e8c94822-472d-4fbd-9aa1-00a6a60f420b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1392,
+        1168
+      ],
+      "id": "0534beac-a5fe-4885-87cb-f07798291638",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $json.email}}",
+        "additionalFields": {
+          "contactOwner": 80593692,
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "profile_analysis",
+                "value": "={{ $json.persona }}"
+              },
+              {
+                "property": "potential_opportunities",
+                "value": "={{ $json.potential_opportunities }}"
+              },
+              {
+                "property": "red_flags",
+                "value": "={{ $json.red_flags }}"
+              },
+              {
+                "property": "qualification_score",
+                "value": "={{ $json.qualification_score }}"
+              },
+              {
+                "property": "sales_call_feedback",
+                "value": "={{ $json.sales_call_feedback }}"
+              }
+            ]
+          },
+          "firstName": "={{ $json.name.split(' ')[0] }}",
+          "lastName": "={{ $json.name.split(' ')[1] }}"
+        },
+        "options": {
+          "resolveData": false
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        704
+      ],
+      "id": "14911f61-cd65-4a51-a1e8-71d242da704e",
+      "name": "Create or update a contact"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "stage": "111289378",
+        "additionalFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "deal_probability",
+                "value": "={{ $json.deal_probability }}"
+              },
+              {
+                "property": "priority_reasons",
+                "value": "={{ $json.priority }}"
+              }
+            ]
+          },
+          "description": "={{ $json.deal_transcript_analysis }}",
+          "dealName": "={{ $json.deal_name }}",
+          "dealOwner": {
+            "__rl": true,
+            "value": 80593692,
+            "mode": "list",
+            "cachedResultName": "yash151294@gmail.com"
+          }
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1920,
+        864
+      ],
+      "id": "1e78c50e-dedb-4da6-88d3-c2e1a55fa9bd",
+      "name": "Create a deal"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        512,
+        272
+      ],
+      "id": "3b7230d7-ed91-41ad-80a5-c76dc0efe72f",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "223f8a7d-e25d-413c-a156-317a4ec603f7",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "0011ecb4-20f3-4ce6-923f-502eba30605c",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "application/msword",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1280,
+        688
+      ],
+      "id": "f83e6730-4c10-44e9-af16-1d2418735a5a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v2/files/{{ $json.id }}/copy?convert=true&supportsAllDrives=true ",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -736,
+        272
+      ],
+      "id": "f6e5e1f7-0d93-4058-973d-590f33a65c22",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $('HTTP Request').item.json.id }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        272
+      ],
+      "id": "a51ebd7c-213d-445b-96af-7a01ecb8398c",
+      "name": "Get a document1"
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        272
+      ],
+      "id": "a1ce813e-9143-488f-9fad-f0a1b72fe791",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract the name and email of the client from the following transcript: {{ $json.data }}\n\nIf no output for the email is found, return a dummy email and mention it."
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        768,
+        192
+      ],
+      "id": "0e808001-7fc7-426a-bfec-5c14a487fc1f",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50ea9c90-4db3-444e-bb9e-096950c4903d",
+              "name": "name",
+              "value": "={{ $json.message.content.client.name}}",
+              "type": "string"
+            },
+            {
+              "id": "003b91f4-6c3a-4d05-a17d-e58d2efbd679",
+              "name": "email",
+              "value": "={{ $json.message.content.client.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "1ed86c1b-6dce-43d7-9d90-fd768ded23f1",
+      "name": "Extract name and email1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        608
+      ],
+      "id": "578867f4-d1f8-424f-8578-1859fb6a8c00",
+      "name": "Anthropic Chat Model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "hq91PTRi41AgyHJO",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n    \"properties\": {\n      \"persona\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"red_flags\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"potential_opportunities\": {\n        \"type\": [\"string\", \"null\"]\n      },\n      \"qualification_score\": {\n        \"type\": [\"number\", \"null\"]\n      },\n      \"deal_transcript_analysis\": {\n        \"type\": [\"'string\", \"null\"]\n      },\n      \"deal_name\": {\n        \"type\": [\"string\", \"null\"]\n      },\n       \"deal_probability\": {\n        \"type\": [\"number\", \"null\"]\n      },\n      \"priority\": {\n        \"type\": [\"'string\", \"null\"]\n      },\n      \"sales_call_feedback\": {\n        \"type\": [\"'string\", \"null\"]\n      }\n    }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        608
+      ],
+      "id": "9629e797-215d-453f-8fe9-fa07494eea99",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "64847f16-479a-4c79-828c-998ba592f9d4",
+              "name": "persona",
+              "value": "={{ $json.output.persona }}",
+              "type": "string"
+            },
+            {
+              "id": "fdc63f6e-f3cc-4325-a754-c3392cdeb42d",
+              "name": "red_flags",
+              "value": "={{ $json.output.red_flags }}",
+              "type": "string"
+            },
+            {
+              "id": "be1d3226-b6b6-4faa-ba34-da3dc6020d7e",
+              "name": "potential_opportunities",
+              "value": "={{ $json.output.potential_opportunities }}",
+              "type": "string"
+            },
+            {
+              "id": "570c858c-a575-499e-81b3-f61cbb02e5bb",
+              "name": "qualification_score",
+              "value": "={{ $json.output.qualification_score }}",
+              "type": "number"
+            },
+            {
+              "id": "98831390-6a37-48a7-b903-cadd65461aea",
+              "name": "deal_transcript_analysis",
+              "value": "={{ $json.output.deal_transcript_analysis }}",
+              "type": "string"
+            },
+            {
+              "id": "d0f5415e-69bf-4442-b391-8da257840175",
+              "name": "deal_name",
+              "value": "={{ $json.output.deal_name }}",
+              "type": "string"
+            },
+            {
+              "id": "4bfeed01-4180-490c-9b7f-24bd2deef23c",
+              "name": "deal_probability",
+              "value": "={{ $json.output.deal_probability }}",
+              "type": "number"
+            },
+            {
+              "id": "c2ce6eb1-9ab2-4222-be3f-e24d18048651",
+              "name": "priority",
+              "value": "={{ $json.output.priority }}",
+              "type": "string"
+            },
+            {
+              "id": "a5ae5d96-73e4-472a-a028-8b7ee90c9fa9",
+              "name": "sales_call_feedback",
+              "value": "={{ $json.output.sales_call_feedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        352
+      ],
+      "id": "23e68bee-4f6a-405e-a0cd-2a7cb3cd6b5a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1360,
+        272
+      ],
+      "id": "85c8d8a0-b253-4e81-aa70-ca6f83d8006d",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "50ea9c90-4db3-444e-bb9e-096950c4903d",
+              "name": "name",
+              "value": "={{ $json.message.content.client.name}}",
+              "type": "string"
+            },
+            {
+              "id": "003b91f4-6c3a-4d05-a17d-e58d2efbd679",
+              "name": "email",
+              "value": "={{ $json.message.content.client.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        1088
+      ],
+      "id": "374ea988-8929-44e3-ab75-bfcd05ee43ee",
+      "name": "Extract contact details"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "64847f16-479a-4c79-828c-998ba592f9d4",
+              "name": "persona",
+              "value": "={{ $json.output.persona }}",
+              "type": "string"
+            },
+            {
+              "id": "fdc63f6e-f3cc-4325-a754-c3392cdeb42d",
+              "name": "red_flags",
+              "value": "={{ $json.output.red_flags }}",
+              "type": "string"
+            },
+            {
+              "id": "be1d3226-b6b6-4faa-ba34-da3dc6020d7e",
+              "name": "potential_opportunities",
+              "value": "={{ $json.output.potential_opportunities }}",
+              "type": "string"
+            },
+            {
+              "id": "570c858c-a575-499e-81b3-f61cbb02e5bb",
+              "name": "qualification_score",
+              "value": "={{ $json.output.qualification_score }}",
+              "type": "number"
+            },
+            {
+              "id": "98831390-6a37-48a7-b903-cadd65461aea",
+              "name": "deal_transcript_analysis",
+              "value": "={{ $json.output.deal_transcript_analysis }}",
+              "type": "string"
+            },
+            {
+              "id": "d0f5415e-69bf-4442-b391-8da257840175",
+              "name": "deal_name",
+              "value": "={{ $json.output.deal_name }}",
+              "type": "string"
+            },
+            {
+              "id": "4bfeed01-4180-490c-9b7f-24bd2deef23c",
+              "name": "deal_probability",
+              "value": "={{ $json.output.deal_probability }}",
+              "type": "number"
+            },
+            {
+              "id": "c2ce6eb1-9ab2-4222-be3f-e24d18048651",
+              "name": "priority",
+              "value": "={{ $json.output.priority }}",
+              "type": "string"
+            },
+            {
+              "id": "a5ae5d96-73e4-472a-a028-8b7ee90c9fa9",
+              "name": "sales_call_feedback",
+              "value": "={{ $json.output.sales_call_feedback }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        1328
+      ],
+      "id": "946963db-5f5a-4b4f-b51d-86edbea2796f",
+      "name": "Extract deal details"
+    },
+    {
+      "parameters": {
+        "operation": "deleteFile",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('If').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -528,
+        272
+      ],
+      "id": "4253759d-45c0-4c7f-9bce-32f6453b3cba",
+      "name": "Delete a file"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "710bdb81-4f5a-459b-b464-2567a4bec00c",
+              "leftValue": "={{ $json.mimeType }}",
+              "rightValue": "application/vnd.google-apps.document",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1024,
+        1088
+      ],
+      "id": "5370eaa2-fba7-49ba-97ed-5fafa146b0b1",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -304,
+        688
+      ],
+      "id": "d96df994-e79f-4c8d-bb5d-510bb102a23e",
+      "name": "Get a document"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK",
+          "mode": "list",
+          "cachedResultName": "Processed",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -544,
+        1344
+      ],
+      "id": "f338acfc-ba75-4d98-96d0-36a4f8b0f67c",
+      "name": "Move file"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK",
+          "mode": "list",
+          "cachedResultName": "Processed",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "db9076cd-b6aa-420c-ad76-59e79fa08c86",
+      "name": "Move file1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract the text from: {{ $json.data }}\n# Role\nAct as a multifaceted sales analysis expert, adept at evaluating sales call transcripts to extract actionable insights, analyze business opportunities, understand prospect profiles, evaluate salesperson performance, and assess potential deal outcomes.\n# Task\nAnalyze the provided transcript of a sales call and generate structured outputs that adhere to the following schema:\n1. Persona\nDescribe the prospect's role, interests, goals, and pain points based on\nexplicit or inferred information.\n2. Red Flags\n• Identify discrepancies, risks, objections, or concerns in the prospect's discourse, such as budget limitations, misalignment of goals, or hesitations.\n3. Potential Opportunities\nHighlight areas for collaboration, upselling, cross-selling, or addressing\nunmet needs.\n4. Qualification Score\nProvide a score (1-10) evaluating the prospect's likelihood to convert based\non readiness, interest, and alignment with the product/service.\n5. Deal Transcript Analysis\nSummarize key actionable points, significant highlights, and critical context\nfrom the call.\n6. Deal Probability\nProvide an estimated likelihood of closing the deal (expressed as a\npercentage).\n7. Priority\n• Assign a priority level (High, Medium, Low) based on deal potential, urgency, and next steps, with an explanation.\n8. Sales Call Feedback\n• Evaluate the salesperson's performance, including strengths, areas for\nimprovement, and actionable recommendations to enhance future interactions.\n9. Deal Name\ncreate a name for this deal based on the transcript analysis\nSpecifics\n• Use clear, concise language that fits the required structured output.\nEnsure each section corresponds directly to the specified field in the schema.\nFocus on actionable insights and key takeaways, excluding irrelevant details\nsuch as small talk.\n# Context\nThis analysis will help prioritize leads, refine sales strategies, and improve salesperson performance. It will support decision-making on deal follow-ups, enhance client relationships, and identify potential business opportunities effectively.\n# Example Output (in JSON format) :\n\"persona\": \"Operations Manager at a mid-sized logistics company, interested in streamlining opfrations, reducing overhead costs, and improving efficiency.\",\n\"red_flags\": Expressed concern about upfront costs and is currently evaluating competitive vendors with lower pricing.\",\n\"potential_opportunities\": \"Offer workflow automation bundles targeting error reduction and propose ongoing support services to address staffing constraints.\",\n\"qualification_score\": 7,\n\"deal_transcript_analysis\": \"The prospect expressed interest in AI-driven solutions but emphasized the need for ROI. They highlighted dissatisfaction with current vendor responsiveness. Next steps include scheduling a demo to showcase specific features and providing a detailed phased implementation plan.\",\n\"deal_name\": \"voice agent for sales\",\n\"deal_probability\": 650,\n\"priority\": \"Medium\"\n\"sales_call_feedback\": \"The salesperson demonstrated strong rapport-building and clear communication of product benefits. However, they missed an opportunity to probe deeper into the competitive landscape. Recommended actions include researching competitors' offerings and asking open-ended questions to uncover hidden needs.\"",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        768,
+        352
+      ],
+      "id": "11a8db54-54e1-40f5-963c-3c2ccc6c5a9a",
+      "name": "AI Agent for Text"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract the text from: {{ $json.text }}\n# Role\nAct as a multifaceted sales analysis expert, adept at evaluating sales call transcripts to extract actionable insights, analyze business opportunities, understand prospect profiles, evaluate salesperson performance, and assess potential deal outcomes.\n# Task\nAnalyze the provided transcript of a sales call and generate structured outputs that adhere to the following schema:\n1. Persona\nDescribe the prospect's role, interests, goals, and pain points based on\nexplicit or inferred information.\n2. Red Flags\n• Identify discrepancies, risks, objections, or concerns in the prospect's discourse, such as budget limitations, misalignment of goals, or hesitations.\n3. Potential Opportunities\nHighlight areas for collaboration, upselling, cross-selling, or addressing\nunmet needs.\n4. Qualification Score\nProvide a score (1-10) evaluating the prospect's likelihood to convert based\non readiness, interest, and alignment with the product/service.\n5. Deal Transcript Analysis\nSummarize key actionable points, significant highlights, and critical context\nfrom the call.\n6. Deal Probability\nProvide an estimated likelihood of closing the deal (expressed as a\npercentage).\n7. Priority\n• Assign a priority level (High, Medium, Low) based on deal potential, urgency, and next steps, with an explanation.\n8. Sales Call Feedback\n• Evaluate the salesperson's performance, including strengths, areas for\nimprovement, and actionable recommendations to enhance future interactions.\n9. Deal Name\ncreate a name for this deal based on the transcript analysis\nSpecifics\n• Use clear, concise language that fits the required structured output.\nEnsure each section corresponds directly to the specified field in the schema.\nFocus on actionable insights and key takeaways, excluding irrelevant details\nsuch as small talk.\n# Context\nThis analysis will help prioritize leads, refine sales strategies, and improve salesperson performance. It will support decision-making on deal follow-ups, enhance client relationships, and identify potential business opportunities effectively.\n# Example Output (in JSON format) :\n\"persona\": \"Operations Manager at a mid-sized logistics company, interested in streamlining opfrations, reducing overhead costs, and improving efficiency.\",\n\"red_flags\": Expressed concern about upfront costs and is currently evaluating competitive vendors with lower pricing.\",\n\"potential_opportunities\": \"Offer workflow automation bundles targeting error reduction and propose ongoing support services to address staffing constraints.\",\n\"qualification_score\": 7,\n\"deal_transcript_analysis\": \"The prospect expressed interest in AI-driven solutions but emphasized the need for ROI. They highlighted dissatisfaction with current vendor responsiveness. Next steps include scheduling a demo to showcase specific features and providing a detailed phased implementation plan.\",\n\"deal_name\": \"voice agent for sales\",\n\"deal_probability\": 650,\n\"priority\": \"Medium\"\n\"sales_call_feedback\": \"The salesperson demonstrated strong rapport-building and clear communication of product benefits. However, they missed an opportunity to probe deeper into the competitive landscape. Recommended actions include researching competitors' offerings and asking open-ended questions to uncover hidden needs.\"",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        784,
+        1328
+      ],
+      "id": "444d9c91-5724-47d9-a4f8-626be1f35b56",
+      "name": "AI Agent for PDF"
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK",
+          "mode": "list",
+          "cachedResultName": "Processed",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1iSUC7cSHoxmHTA1iXj6U-x9RNP3DdrOK"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        0,
+        688
+      ],
+      "id": "8f53d159-b08f-4b72-9852-f6f93665b4ee",
+      "name": "Move google doc file"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        832,
+        1824
+      ],
+      "id": "f1a96250-6a2e-474e-bc14-362cd94967ff",
+      "name": "Message a model2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/responses",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"model\": \"gpt-4.1\",\n    \"input\": [\n      {\n        \"role\": \"user\",\n        \"content\": [\n          {\"type\": \"input_text\", \"text\": \"Use Python to process this PDF and extract all email-related hyperlinks. Please: 1. Read through the entire document. 2. Find all email addresses and mailto: links3. Extract both visible email text and embedded hyperlink URLs4. Create a structured output showing the relationships between display text and actual links\"},\n          {\n                        \"type\": \"input_file\",\n                        \"file_id\": \"{{ $json.id }}\"\n          }\n        ]\n      }\n    ]\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1056,
+        1824
+      ],
+      "id": "f8afe31b-1980-451c-990b-11d80b0a11ec",
+      "name": "HTTP Request5",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent for PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Extract contact details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent for PDF",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent for PDF",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent for Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Delete a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document1": {
+      "main": [
+        [
+          {
+            "node": "Move file1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Extract name and email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract name and email1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent for Text",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent for Text",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Create or update a contact",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract contact details": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract deal details": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Delete a file": {
+      "main": [
+        [
+          {
+            "node": "Get a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Move google doc file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent for Text": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent for PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract deal details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "95058929-e020-48ab-94d0-2434cc751a10",
+  "meta": {
+    "instanceId": "cb86acbb40698667bfd6ae40c164dff12da3c4236b27423413b419f81b74f0a8"
+  },
+  "id": "aaVxKy6sulyB1Gda",
+  "tags": []
+}
