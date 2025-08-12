@@ -1,0 +1,464 @@
+{
+  "name": "Cold Outreach",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "f94d158d-e9dc-4960-a0d7-eb0b633c611d",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -880,
+        160
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.website }}",
+        "responseFormat": "string",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "64a80b56-b086-4316-bce7-cdc9c9513a3b",
+      "name": "HTTP Request: Get Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -208,
+        64
+      ],
+      "typeVersion": 2,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1LYaFs-SpNwbLfcyQx8BvAwhjDQw2KCk0rLhy2gAkjo0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LYaFs-SpNwbLfcyQx8BvAwhjDQw2KCk0rLhy2gAkjo0/edit?usp=drivesdk",
+          "cachedResultName": "Lead Lists"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 932253400,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LYaFs-SpNwbLfcyQx8BvAwhjDQw2KCk0rLhy2gAkjo0/edit#gid=932253400",
+          "cachedResultName": "Lead Lists"
+        },
+        "options": {}
+      },
+      "id": "3f92943c-e4dd-4c8e-9ca4-3488651f283c",
+      "name": "Get row(s) in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        -656,
+        160
+      ],
+      "typeVersion": 4.6
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1LYaFs-SpNwbLfcyQx8BvAwhjDQw2KCk0rLhy2gAkjo0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1LYaFs-SpNwbLfcyQx8BvAwhjDQw2KCk0rLhy2gAkjo0/edit?usp=drivesdk",
+          "cachedResultName": "Lead Lists"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1xx5Zi4Of1SYZNGOC7DvZ6Uz-LBS6DK0zGhSe_1cHaSk/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "value": {
+            "id": "={{ $json.id }}",
+            "status": "INVALID_EMAIL"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_name",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "first_name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_name",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "last_name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_name",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "company_name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "website",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "website",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "2a667ee3-db5f-4de4-ab73-81597e61694c",
+      "name": "Update row in sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        0,
+        320
+      ],
+      "typeVersion": 4.6
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Validate E-mail with regex').first().json.email }}",
+        "subject": "={{ $json.subject }}\n",
+        "emailType": "text",
+        "message": "={{ $json.greeting }}\n\n{{ $json.opening_line }}\n\n{{ $json.main_body }}\n\n{{ $json.ending }}",
+        "options": {}
+      },
+      "id": "a3b9749e-33b4-4a66-928b-0e8ccc321d9a",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        752,
+        16
+      ],
+      "webhookId": "1ab4365c-b378-47c6-b172-f03af1bb8c9e",
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "436a6e95-5680-46ff-b4e3-0218c51a8173",
+      "name": "Wait (We have rate limit)",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        -208,
+        320
+      ],
+      "webhookId": "8f13e65a-f13e-44c7-9d57-aec213dd8c19",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7103571a-7251-4ace-aece-42c64d3006bf",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        0,
+        512
+      ],
+      "webhookId": "89faa88d-6558-4524-ba19-d01213098fde",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "id": "13835408-5d8a-4789-a8ab-f7bb2c91f74d",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        256,
+        240
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a personalized initial cold outreach message for a potential B2B lead. Use the lead’s company website to identify what they do and craft a compelling opening line that shows genuine interest. Then follow with a brief message introducing our solution, highlighting how it aligns with their business goals, and ends with a soft CTA (call to action). The tone should be professional yet friendly, optimized for high response rates. Return the subject line, opening sentence, and main body in plain text. Make sure the mail is short under 120 words at max. Always end the email with this \"Looking forward to hearing from you!\"\n\nUse these information:\nLeads:\nfirst_Name:{{ $('Validate E-mail with regex').item.json.first_name }}\ncoompany_bame:{{ $('Validate E-mail with regex').item.json.company_name }}\nwebsite_url: {{ $('Validate E-mail with regex').item.json.website }}\nwebsite_content: {{ $json.cleanedData }}\n\nOur Company:\ncompany_name: CareerOS,\nour_solution: CareerOS provides tools that enable students and professionals to organise their search, network strategically, and connect with key decision‑makers, making it easier to progress from exploration to offers. For university career services and advisors, the platform supports employer engagement and student employability at scale by facilitating structured outreach, events, and relationship management with hiring partners. For employers, it offers a way to engage with targeted talent pipelines through institution partnerships and coordinated activities that improve hiring efficiency and outcomes.\n\n\nMust Follow Instrcutions:\nYou must always respond in the following JSON format or else i will be fired.\n\n{  \"subject\": \"...\", \n\"greeting\":\"...\" \n\"opening_line\": \"...\", \n\"main_body\": \"...\" \n\"ending\":\"...\"}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Act as Marketer with 25 years of experience."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "e6ed6693-d44a-4f70-8d41-f36028b8ff0e",
+      "name": "Outreach Prompt",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        240,
+        432
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field 'cleanedData' with HTML removed from 'data'\nfor (const item of $input.all()) {\n  const html = item.json.data || '';\n  // Remove all HTML tags but keep text content\n  const cleaned = html.replace(/<[^>]*>/g, '').trim();\n  item.json.cleanedData = cleaned;\n}\n\n// Return all items with the new field added\nreturn $input.all();\n"
+      },
+      "id": "22f8b8b8-a097-4791-949e-f64001f7b96c",
+      "name": "Clean Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "844ae7ce-d7ad-4742-9e88-8a73ec5abd59",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              },
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "bd93dc81-3e6a-41c9-ab8f-d93986164ece",
+      "name": "Validate E-mail with regex",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -432,
+        176
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $input.first().json.text || \"\";\n\ntry {\n  // Match JSON content between ```json and ```\n  const jsonMatch = rawText.match(/```json\\s*([\\s\\S]+?)\\s*```/i);\n\n  if (!jsonMatch || !jsonMatch[1]) {\n    throw new Error(\"No valid JSON block found in input.\");\n  }\n\n  const jsonString = jsonMatch[1].trim();\n\n  // Safely parse JSON\n  const parsedJson = JSON.parse(jsonString);\n\n  return [{ json: parsedJson }];\n} catch (error) {\n  return [{\n    json: {\n      error: \"Failed to parse JSON\",\n      details: error.message,\n    },\n  }];\n}\n"
+      },
+      "id": "51de1b76-25f5-4818-a0e0-5f81cf9f21fd",
+      "name": "Parse Json",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        544,
+        16
+      ],
+      "typeVersion": 2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Get Website": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Outreach Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Validate E-mail with regex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait (We have rate limit)": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Outreach Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Outreach Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Outreach Prompt": {
+      "main": [
+        [
+          {
+            "node": "Parse Json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "Outreach Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate E-mail with regex": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Get Website",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait (We have rate limit)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Json": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a243a57b-238c-4909-b102-22d93002ec5b",
+  "meta": {
+    "instanceId": "cb86acbb40698667bfd6ae40c164dff12da3c4236b27423413b419f81b74f0a8"
+  },
+  "id": "iYpvBRHdNbh6gKTT",
+  "tags": []
+}
