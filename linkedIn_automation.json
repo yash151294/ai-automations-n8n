@@ -1,0 +1,435 @@
+{
+  "name": "linkedIn_automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-gilfoyle",
+        "options": {}
+      },
+      "id": "515e6192-70dd-4d84-95a7-dc86d4ad9cf7",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1776,
+        320
+      ],
+      "webhookId": "db3bf3da-b9b7-4823-8c5d-14f5de0272da",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1def7344-ce55-450d-a85a-468f746fe31f",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.body.event.bot_id }}",
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e31ba620-ce00-404c-9c6c-6eeb8dbc4b23",
+      "name": "Is user message?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -1552,
+        320
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').first().json.body.event.channel }}__gilfoyle",
+        "contextWindowLength": 30
+      },
+      "id": "94000d17-3f4e-4114-a9ff-49429f518dee",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        -1200,
+        304
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {},
+      "id": "a25db1dc-1a97-4a7f-af6c-442a6f60b8fa",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        -1200,
+        480
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Make me a LinkedIn post about '{{ $json.body.text }}'' (upto 250 words)",
+        "options": {
+          "systemMessage": "# Overview\nuser requests.\nYou are an AI agent responsible for creating LinkedIn posts based on\n# Instructions\n1. Always use the Tavily Search tool to find accurate, current information about the topic.\n2. Write an informative, engaging tweet (up to 10000 characters).\n3. Include a brief reference to the source (e.g., \"via TechCrunch\",\n\"according to The Verge\") directly in the tweet.\n4. Do not output anything except the final tweet.\n## Tool\n- Tavily Search: Use this for real-time web search. Must be used every time before creating the post.\n## Example\n1) Input: \"Create a post about NASA's latest discovery.\"\n2) Action: Search the web using Tavily Search.\n3) Output: \"NASA just found signs of ancient riverbeds on Mars-suggesting the Red Planet may have once been home to life. Huge leap in space exploration (via NASA) #Mars #SpaceNews\"\n# Final Notes\n- Avoid clickbait or speculation-stick to factual and sourced content.\n- Use hashtags or emojis only to enhance visibility.\n- Keep Language friendly, concise, and informative.\n- Never use an \"®\" symbol when referencing the source."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1264,
+        80
+      ],
+      "id": "0e9bea2c-b591-4e8f-af8b-f1cc191b0e79",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer <YOUR_KEY>"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"query\": \"{{ $json.searchTerm }}\",\n  \"auto_parameters\": false,\n  \"topic\": \"general\",\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 1,\n  \"time_range\": null,\n  \"days\": 7,\n  \"include_answer\": true,\n  \"include_raw_content\": false,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"country\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -1072,
+        304
+      ],
+      "id": "630531c6-4dd8-41d7-9f37-9ab60e7d05a7",
+      "name": "Tavily"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1328,
+        304
+      ],
+      "id": "ee968f36-0bc5-4186-8115-45840feba625",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "sendAndWait",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C097Q7HV9LL",
+          "mode": "list",
+          "cachedResultName": "linkedin_posts"
+        },
+        "message": "=Good to go?\n\n{{ $json.post }}",
+        "responseType": "freeText",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        -640,
+        48
+      ],
+      "id": "efb10f6b-ed4c-4202-83d1-b00dd2383bdb",
+      "name": "Send a message",
+      "webhookId": "f3aad56f-310c-4404-baee-8950f8c6fc4e"
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.data.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Approved",
+              "description": "The post has been reviewed and accepted as-is. The human explicitly or implicitly expressed approval, indicating that no changes are needed.|Example phrases include:\"Looks good\"\"Go ahead and send it\"\"This works for me\"\"Approved\"\"No changes needed\""
+            },
+            {
+              "category": "Declined",
+              "description": "The post has been reviewed, but the human requests modifications before it is sent like tweaks, removing parts, rewording, etc. This could include rewording, suggested edits, or major revisions.\n\nExample phrases include:\n\"Can we tweak this part\"\n\"Make it shorter\"\n\"Change the source to : CareerOS\"\n\"More emojis\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -416,
+        48
+      ],
+      "id": "a0ad49b4-1e0d-433a-8234-0f727b22ecdb",
+      "name": "Text Classifier1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        272
+      ],
+      "id": "b4385da8-be20-427b-a911-736255c30eeb",
+      "name": "OpenAI Chat Model1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the post to revise: \n{{ $('Set Post').item.json.post }}\n\nHere is the human feedback: \n{{ $json.data.text }}\n\nOUTPUT FORMAT:\nStart after the subject line of the email",
+        "options": {
+          "systemMessage": "#Overview\nYou are an expert email writer. Your job is to take an incoming email draft and revise it based on the feedback of the human submitted."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -64,
+        272
+      ],
+      "id": "e21c0d32-cc33-4380-bd6b-a88d062905f0",
+      "name": "Revision Agent1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ee68214-600d-475f-b1c7-b15bed1c5564",
+              "name": "post",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -864,
+        176
+      ],
+      "id": "d53ffea4-aede-4229-87e5-49a771402d31",
+      "name": "Set Post"
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Set Post').item.json.post }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "41375ff2-1810-4410-a9d3-878fcd865dce",
+      "name": "Create a post",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Is user message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is user message?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Set Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Revision Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier1": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revision Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revision Agent1": {
+      "main": [
+        [
+          {
+            "node": "Set Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Post": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "25896ca1-5731-47d6-b2f0-8084294670f8",
+  "meta": {
+    "instanceId": "cb86acbb40698667bfd6ae40c164dff12da3c4236b27423413b419f81b74f0a8"
+  },
+  "id": "NQmHnfUnPBzwSFuh",
+  "tags": [
+    {
+      "createdAt": "2025-08-08T20:24:00.047Z",
+      "updatedAt": "2025-08-08T20:24:00.047Z",
+      "id": "9ekx15p0azPk7lG2",
+      "name": "slack"
+    },
+    {
+      "createdAt": "2025-08-08T20:23:59.993Z",
+      "updatedAt": "2025-08-08T20:23:59.993Z",
+      "id": "qspwKjCiDfQQrxeY",
+      "name": "webhook"
+    }
+  ]
+}
